@@ -101,8 +101,6 @@ export const signIn = async (req, res, next) => {
     } catch (error) {
         next(error)
     }
-
-
 }
 
 
@@ -116,12 +114,8 @@ export const forgotPassword = async (req, res, next) => {
         if (!user) return res.status(404).json({ message: "User not found" });
 
         // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // const hashedOtp = await bcrypt.hash(otp, 10); // Hash OTP before storing
-
-        // // Save OTP & expiration time in the database
-        // user.otp = hashedOtp;
         user.otp = otp
         user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
 
@@ -131,7 +125,7 @@ export const forgotPassword = async (req, res, next) => {
         const mailOptions = {
             from: EMAIL_USER,
             to: user.email,
-            subject: "Password Reset OTP",
+            subject: "Reset Password OTP",
             text: `Your OTP for password reset is: ${otp}. It will expire in 10 minutes.`,
         };
 
@@ -156,7 +150,6 @@ export const forgotPassword = async (req, res, next) => {
 };
 
 
-
 export const verifyOtp = async (req, res, next) => {
     try {
         const { email, otp } = req.body;
@@ -165,14 +158,20 @@ export const verifyOtp = async (req, res, next) => {
 
         if (!user) {
             return res.status(404).json({
-                stauts: 404,
+                status: 404,
                 success: false,
                 message: "User not found",
             });
         }
 
-        if (!user.otp || user.otp !== otp || user.otpExpires < Date.now()) {
-            return res.status(400).json({ message: "Invalid or expired OTP" });
+        if (!user.otp || String(user.otp) !== String(otp) || new Date(user.otpExpires).getTime() < Date.now()) {
+            return res.status(400).json(
+                {
+                    status: 400,
+                    success: false,
+                    message: "Invalid or expired OTP",
+                }
+            );
         }
 
         user.isVerified = true;
@@ -185,7 +184,7 @@ export const verifyOtp = async (req, res, next) => {
             success: true,
             message: "OTP verified successfully"
         });
-        
+
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
         next()
