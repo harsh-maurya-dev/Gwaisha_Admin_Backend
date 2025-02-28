@@ -192,6 +192,38 @@ export const verifyOtp = async (req, res, next) => {
 };
 
 
+export const resetPassword = async (req, res, next) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json(
+                {
+                    status: 404,
+                    success: false,
+                    message: "User not found!"
+                });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
+
+        await user.save();
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Password reset successfully!"
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+        next()
+    }
+};
+
 
 export const signOut = async (req, res, next) => {
 }
