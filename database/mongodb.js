@@ -11,6 +11,7 @@ const connectToDatabase = async () => {
         await mongoose.connect(DB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            // serverSelectionTimeoutMS: 30000
         })
         console.log(`connected to database in ${NODE_ENV} mode`)
     } catch (error) {

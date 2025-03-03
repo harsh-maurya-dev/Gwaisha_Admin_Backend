@@ -57,7 +57,7 @@ export const signUp = async (req, res, next) => {
     }
 };
 
-
+// SignIn API Logic
 export const signIn = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -132,7 +132,7 @@ export const forgotPassword = async (req, res, next) => {
         // console.log(EMAIL_USER);
 
         await transporter.sendMail(mailOptions);
-
+        await user.save();
         res.status(202).json(
             {
                 status: 202,
