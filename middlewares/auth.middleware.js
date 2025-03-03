@@ -9,7 +9,7 @@ const authorize = async (req, res, next) => {
             token = req.headers.authorization.split(' ')[1];
         }
 
-        if (!token) return res.status(401).json({ message: "Unauthorized User" })
+        if (!token) return res.status(401).json({ message: "No token, authorization denied!" })
 
         const decoded = jwt.verify(token, JWT_SECRET)
 
@@ -21,7 +21,7 @@ const authorize = async (req, res, next) => {
 
         next()
     } catch (error) {
-        res.status(401).json({ message: "Unauthorized User", error: error.message })
+        res.status(400).json({ message: "Unauthorized", error: error.message })
     }
 }
 

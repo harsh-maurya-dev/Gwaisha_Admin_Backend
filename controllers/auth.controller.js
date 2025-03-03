@@ -9,10 +9,22 @@ import transporter from "../config/nodemailer.js";
 export const signUp = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-    try {
-        const { name, email, password } = req.body;
 
-        // Check if the email already exists
+    try {
+        const { name, email, password, age, mobile_number, address, profile_image, total_orders, status, user_type } = req.body;
+
+        // Validate required fields
+        if (!name || !email || !password || !mobile_number) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Name, email, password, and mobile number are required fields.",
+            });
+        }
+
+        // Check if the email or mobile number already exists
         const existingUser = await User.findOne({ email }).session(session);
         if (existingUser) {
             await session.abortTransaction();
@@ -20,23 +32,42 @@ export const signUp = async (req, res, next) => {
             return res.status(409).json({
                 status: 409,
                 success: false,
-                message: "User already exists!",
+                message: "User with this email already exists!",
             });
         }
 
-        // Hash the password asynchronously
+        // Hash the password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create a new user
-        const newUser = await User.create([{ name, email, password: hashedPassword }], { session });
+        const newUser = await User.create(
+            [
+                {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    age,
+                    mobile_number,
+                    address,
+                    profile_image,
+                    total_orders,
+                    status,
+                    user_type
+                },
+            ],
+            { session }
+        );
 
         // Generate JWT token
-        const token = jwt.sign({ userId: newUser[0]._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign({ userId: newUser[0]._id, userType:newUser[0].user_type }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         // Commit the transaction
         await session.commitTransaction();
         session.endSession();
+
+        // Log the successful user creation
+        // logger.info(`User created successfully: ${newUser[0].email}`);
 
         // Send success response
         res.status(201).json({
@@ -44,15 +75,32 @@ export const signUp = async (req, res, next) => {
             success: true,
             message: "User created successfully!",
             data: {
-                token: token,
-                user: newUser[0]
+                token,
+                user: {
+                    _id: newUser[0]._id,
+                    name: newUser[0].name,
+                    email: newUser[0].email,
+                    age: newUser[0].age,
+                    mobile_number: newUser[0].mobile_number,
+                    address: newUser[0].address,
+                    profile_image: newUser[0].profile_image,
+                    total_orders: newUser[0].total_orders,
+                    status: newUser[0].status,
+                    user_type:newUser[0].user_type
+                },
             },
         });
     } catch (error) {
+        // Log the error
+        // logger.error(`Error during user signup: ${error.message}`);
+
+        // Rollback the transaction if it's still active
         if (session.inTransaction()) {
             await session.abortTransaction();
         }
         session.endSession();
+
+        // Pass the error to the error-handling middleware
         next(error);
     }
 };

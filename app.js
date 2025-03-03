@@ -11,7 +11,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-    origin: "http://ec2-52-66-186-107.ap-south-1.compute.amazonaws.com:8095", 
+    origin: "http://ec2-52-66-186-107.ap-south-1.compute.amazonaws.com:8095",
+    // origin: "http://localhost:5174",
     methods: "GET,POST,PUT,DELETE",
     credentials: true
 }));
